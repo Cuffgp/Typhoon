@@ -1,0 +1,3 @@
+[submodule "Typhoon/vendor/glfw"]
+	path = Typhoon/vendor/glfw
+	url = https://github.com/Cuffgp/glfw

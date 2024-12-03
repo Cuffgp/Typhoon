@@ -23,6 +23,9 @@ Library["Vulkan"] = "%{VULKAN_SDK}/Lib/vulkan-1.lib"
 IncludeDir = {}
 IncludeDir["VulkanSDK"] = "%{VULKAN_SDK}/Include"
 
+group "Dependencies"
+	include "Typhoon/vendor/glfw"
+
 project "Typhoon"
 	location "Typhoon"
 	kind "ConsoleApp"
@@ -47,11 +50,13 @@ project "Typhoon"
 	includedirs
 	{
 		"%{prj.name}/src",
+		"%{prj.name}/vendor/glfw/include",
 		"%{IncludeDir.VulkanSDK}"
 	}
 	
 	links
 	{
+		"GLFW",
 		"%{Library.Vulkan}",
 	}
 	
