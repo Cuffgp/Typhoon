@@ -50,6 +50,7 @@ project "Typhoon"
 	includedirs
 	{
 		"%{prj.name}/src",
+		"%{prj.name}/vendor/",
 		"%{prj.name}/vendor/glfw/include",
 		"%{IncludeDir.VulkanSDK}"
 	}

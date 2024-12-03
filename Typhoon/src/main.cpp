@@ -3,12 +3,15 @@
 #include <iostream>
 
 #include "GLFW/glfw3.h"
+#include "spdlog/spdlog.h"
 
 int main ()
 {
+	spdlog::info("Hello world");
+
 	if (!glfwInit())
 	{
-		std::cout << "Failed to init GLFW" << std::endl;
+		spdlog::info("Failed to init GLFW");
 		return -1;
 	}
 
@@ -18,7 +21,7 @@ int main ()
 	if (!window)
 	{
 		glfwTerminate();
-		std::cout << "Failed to create window" << std::endl;
+		spdlog::info("Failed to create window");
 		return -1;
 	}
 
