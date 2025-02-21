@@ -1,14 +1,13 @@
 #include "typch.h"
 
-#include "Log.h"
+#include "Typhoon/Core/Log.h"
 
-#include "vulkan/vulkan.h"
-#include <iostream>
-
-#include "Application.h"
+#include "Typhoon/Core/Application.h"
 
 int main ()
 {
+	Typhoon::Log::Init();
+
 	Typhoon::Application *app = new Typhoon::Application;
 
 	app->Run();

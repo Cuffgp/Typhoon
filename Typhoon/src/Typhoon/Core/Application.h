@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Typhoon/Core/Base.h"
+#include "Typhoon/DirectX/DirectXDevice.h"
+
 #include "glfw/glfw3.h"
 
 namespace Typhoon {
@@ -13,6 +16,7 @@ namespace Typhoon {
 		void Run();
 	private:
 		GLFWwindow* m_Window;
+		Scope<DirectXDevice> m_Device;
 
 	};
 

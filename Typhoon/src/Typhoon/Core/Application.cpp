@@ -1,16 +1,16 @@
 #include "typch.h"
 
-#include "Application.h"
+#include "Typhoon/Core/Application.h"
 
 namespace Typhoon {
 
 	Application::Application()
 	{
-		SPDLOG_INFO("Creating application");
+		TY_INFO("Creating application");
 
 		if (!glfwInit())
 		{
-			SPDLOG_INFO("Failed to init GLFW");
+			TY_INFO("Failed to init GLFW");
 		}
 
 		m_Window = glfwCreateWindow(1280, 720, "Hello World", NULL, NULL);
@@ -18,16 +18,14 @@ namespace Typhoon {
 		if (!m_Window)
 		{
 			glfwTerminate();
-			SPDLOG_INFO("Failed to create window");
+			TY_INFO("Failed to create window");
 		}
 
-		m_Device = new VulkanDevice();
-
+		m_Device = CreateScope<DirectXDevice>();
 	}
 
 	Application::~Application()
 	{
-		delete m_Device;
 
 		glfwTerminate();
 	}

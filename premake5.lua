@@ -59,6 +59,10 @@ project "Typhoon"
 	{
 		"GLFW",
 		"%{Library.Vulkan}",
+		"d3d12",
+		"dxgi",
+		"d3dcompiler",
+		"dxguid"
 	}
 	
 	filter "configurations:Debug"
