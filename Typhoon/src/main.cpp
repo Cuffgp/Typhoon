@@ -7,12 +7,15 @@
 int main ()
 {
 	Typhoon::Log::Init();
+	Typhoon::DirectXDevice::Init();
 
 	Typhoon::Application *app = new Typhoon::Application;
 
 	app->Run();
 
 	delete app;
+
+	Typhoon::DirectXDevice::Destroy();
 
 	return 0;
 

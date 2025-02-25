@@ -1,26 +1,44 @@
 #include "typch.h"
 
-#include "DirectXDevice.h"
+#include "Typhoon/DirectX/DirectXDevice.h"
 
 
 namespace Typhoon {
 
+	DirectXDevice* DirectXDevice::s_Device = nullptr;
+
+	static void DebugMessageCallback(
+		D3D12_MESSAGE_CATEGORY Category,
+		D3D12_MESSAGE_SEVERITY Severity,
+		D3D12_MESSAGE_ID ID,
+		LPCSTR pDescription,
+		void* pContext)
+	{
+		// Handle the debug message here
+		// You can log it, print it, or take other actions based on the severity/category
+		TY_INFO("Debug Message: {}", pDescription);
+	}
+
 	DirectXDevice::DirectXDevice()
 	{
-		// Setup the debug layer
-		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugController))))
+		uint32_t dxgiFactoryFlags = 0;
+
+		if (m_Validation)
 		{
+			if (D3D12GetDebugInterface(IID_PPV_ARGS(&m_DebugController)) != S_OK)
+			{
+				TY_ERROR("Failed to create Debug interface");
+			}
+
 			m_DebugController->EnableDebugLayer();
-			m_DebugController->SetEnableGPUBasedValidation(TRUE);
-			TY_INFO("D3D12 Debug Layer enabled.");
-		}
-		else
-		{
-			TY_ERROR("Failed to enable D3D12 Debug Layer.");
+			m_DebugController->SetEnableGPUBasedValidation(true);
+			//m_DebugController->QueryInterface(IID_PPV_ARGS(&m_InfoQueue));
+
+			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 		}
 
 		// Create the factory, adaptor, and device
-		auto hr = CreateDXGIFactory1(IID_PPV_ARGS(&m_Factory));
+		auto hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_Factory));
 
 		uint32_t adapterCount = 0;
 		IDXGIAdapter1* adapter;
@@ -58,64 +76,70 @@ namespace Typhoon {
 			TY_ERROR("Failed to select adapter");
 		}
 
-		// Query the debug device from the D3D12 device
-		if (SUCCEEDED(m_Device->QueryInterface(IID_PPV_ARGS(&m_DebugDevice))))
-		{
-			TY_INFO("D3D12 Debug Device acquired.");
-		}
-		else
-		{
-			TY_ERROR("Failed to acquire D3D12 Debug Device.");
-		}
+		m_Device->QueryInterface(IID_PPV_ARGS(&m_InfoQueue));
 
-		if (SUCCEEDED(m_DebugDevice->QueryInterface(IID_PPV_ARGS(&m_InfoQueue))))
-		{
-			TY_INFO("Info Queue Created.");
-		}
-		else
-		{
-			TY_ERROR("Failed to create info queue");
-		}
+		DWORD callbackCookie;
+		D3D12_MESSAGE_CALLBACK_FLAGS callbackFlags = D3D12_MESSAGE_CALLBACK_FLAG_NONE;
+		m_InfoQueue->RegisterMessageCallback(DebugMessageCallback, callbackFlags, nullptr, &callbackCookie);
+
+		//RetrieveDebugMsg();
 
 		
 	}
 
 	DirectXDevice::~DirectXDevice()
 	{
-		if (m_Validation)
-		{
-			m_DebugController->Release();
-			m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY);
-			m_DebugDevice->Release();
-			m_InfoQueue->Release();
-		}
 
 		m_Device->Release();
 		m_Adapter->Release();
 		m_Factory->Release();
+
+		if (m_Validation)
+		{
+			m_DebugController->Release();
+			//m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY);
+			//m_DebugDevice->Release();
+			m_InfoQueue->Release();
+		}
+	}
+
+	void DirectXDevice::Init()
+	{
+		s_Device = new DirectXDevice();
+	}
+
+	void DirectXDevice::Destroy()
+	{
+		delete s_Device;
+		s_Device = nullptr;
 	}
 
 	void DirectXDevice::RetrieveDebugMsg()
 	{
 		for (size_t index = 0; index < m_InfoQueue->GetNumStoredMessages(); index++)
 		{
-			size_t length;
-			D3D12_MESSAGE message;
-			m_InfoQueue->GetMessage(index, &message, &length);
+			size_t length = 0;
+			std::vector<byte> messageData;
 
-			auto category = message.Severity;
-			auto severity = message.Severity;
-
+			m_InfoQueue->GetMessage(index, nullptr, &length);
+			messageData.resize(length);
+			D3D12_MESSAGE* message = reinterpret_cast<D3D12_MESSAGE*>(messageData.data());
+			m_InfoQueue->GetMessage(index, message, &length);
+			
+			auto category = message->Category;
+			auto severity = message->Severity;
+			
 			if (severity == D3D12_MESSAGE_SEVERITY_INFO)
-				TY_INFO("DirectX: {}", message.pDescription);
+				TY_INFO("[DirectX] {}", message->pDescription);
 			else if (category == D3D12_MESSAGE_SEVERITY_WARNING)
-				TY_WARN("DirectX: {}", message.pDescription);
+				TY_WARN("[DirectX] {}", message->pDescription);
 			else if (category == D3D12_MESSAGE_SEVERITY_ERROR)
-				TY_ERROR("DirectX: {}", message.pDescription);
+				TY_ERROR("[DirectX] {}", message->pDescription);
 			else if (category == D3D12_MESSAGE_SEVERITY_CORRUPTION)
-				TY_ERROR("DirectX: {}", message.pDescription);
+				TY_ERROR("[DirectX] {}", message->pDescription);
 			else
-				TY_TRACE("DirectX: {}", message.pDescription);
+				TY_TRACE("[DirectX] {}", message->pDescription);
+				
 		}
 
 		m_InfoQueue->ClearStoredMessages();
